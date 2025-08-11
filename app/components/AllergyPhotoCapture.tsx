@@ -12,13 +12,20 @@ import {
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
 import * as MediaLibrary from 'expo-media-library';
 
+import CameraControls from './ACP_Components/CameraControls';
+import CameraHeader from './ACP_Components/CameraHeader';
+import CameraPermissionScreen from './ACP_Components/CameraPermissions';
+import CameraScreen from './ACP_Components/CameraScreen';
+import PhotoInstructions from './ACP_Components/PhotoInstructions';
+import PhotoPreviewControls from './ACP_Components/PhotoPreviewControls';
+import PhotoPreviewScreen from './ACP_Components/PhotoPreviewScreen';
+
 const AllergyPhotoCapture = ({ onPhotoTaken, onCancel }) => {
-  const [cameraPermission, requestCameraPermission] = useCameraPermissions();
+  const [hasPermission, setHasPermission] = useState(false);
   const [hasMediaLibraryPermission, setHasMediaLibraryPermission] = useState(null);
   const [capturedPhoto, setCapturedPhoto] = useState(null);
   const [isCapturing, setIsCapturing] = useState(false);
   const [cameraType, setCameraType] = useState('back');
-  const cameraRef = useRef(null);
 
   useEffect(() => {
     requestMediaLibraryPermission();
@@ -34,29 +41,12 @@ const AllergyPhotoCapture = ({ onPhotoTaken, onCancel }) => {
     }
   };
 
-  const takePhoto = async () => {
-    if (!cameraRef.current || isCapturing) return;
-
-    setIsCapturing(true);
-
-    try {
-      const photo = await cameraRef.current.takePictureAsync({
-        quality: 0.8,
-        base64: false,
-        skipProcessing: false,
-        exif: false,
-      });
-
-      setCapturedPhoto(photo);
-    } catch (error) {
-      console.error('Photo capture error:', error);
-      Alert.alert('Error', 'Failed to capture photo. Please try again.');
-    } finally {
-      setIsCapturing(false);
-    }
+  const handleCapture = async (photo) => {
+    setIsCapturing(false);
+    setCapturedPhoto(photo);
   };
 
-  const confirmPhoto = async () => {
+  const handleConfirmPhoto = async () => {
     if (capturedPhoto && onPhotoTaken) {
       // Optionally save to media library
       if (hasMediaLibraryPermission) {
@@ -66,132 +56,53 @@ const AllergyPhotoCapture = ({ onPhotoTaken, onCancel }) => {
           console.log('Could not save to media library:', error);
         }
       }
-
+      
       onPhotoTaken(capturedPhoto);
     }
   };
 
-  const retakePhoto = () => {
+  const handleRetakePhoto = () => {
     setCapturedPhoto(null);
-  };
-
-  const handleCancel = () => {
-    if (onCancel) {
-      onCancel();
-    }
   };
 
   const toggleCameraType = () => {
     setCameraType(current => (current === 'back' ? 'front' : 'back'));
   };
 
-  if (!cameraPermission) {
+  const handleCameraCapture = () => {
+    setIsCapturing(true);
+  };
+
+  // Permission flow
+  if (!hasPermission) {
     return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.permissionContainer}>
-          <Text style={styles.permissionText}>Loading camera permissions...</Text>
-        </View>
-      </SafeAreaView>
+      <CameraPermissionScreen 
+        onPermissionGranted={() => setHasPermission(true)}
+        onCancel={onCancel}
+      />
     );
   }
 
-  if (!cameraPermission.granted) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.permissionContainer}>
-          <Text style={styles.permissionText}>
-            Camera access is required to capture photos for allergy reaction detection
-          </Text>
-          <TouchableOpacity
-            style={styles.permissionButton}
-            onPress={requestCameraPermission}
-          >
-            <Text style={styles.buttonText}>Enable Camera</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.permissionButton, styles.cancelButton]}
-            onPress={handleCancel}
-          >
-            <Text style={styles.cancelButtonText}>Cancel</Text>
-          </TouchableOpacity>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
+  // Photo preview flow
   if (capturedPhoto) {
     return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.previewContainer}>
-          <Image
-            source={{ uri: capturedPhoto.uri }}
-            style={styles.previewImage}
-          />
-          <View style={styles.instructionContainer}>
-            <Text style={styles.instructionText}>
-              Review the photo for allergy reaction documentation
-            </Text>
-          </View>
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity
-              style={[styles.actionButton, styles.retakeButton]}
-              onPress={retakePhoto}
-            >
-              <Text style={styles.retakeButtonText}>Retake</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.actionButton, styles.confirmButton]}
-              onPress={confirmPhoto}
-            >
-              <Text style={styles.buttonText}>Use Photo</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </SafeAreaView>
+      <PhotoPreviewScreen
+        photo={capturedPhoto}
+        onRetake={handleRetakePhoto}
+        onConfirm={handleConfirmPhoto}
+      />
     );
   }
 
+  // Camera flow
   return (
-    <SafeAreaView style={styles.container}>
-      <CameraView
-        ref={cameraRef}
-        style={styles.camera}
-        facing={cameraType}
-      >
-        <View style={styles.overlay}>
-          <View style={styles.header}>
-            <Text style={styles.headerText}>Allergy Reaction Photo</Text>
-            <Text style={styles.subHeaderText}>
-              Position the affected area in the center of the frame
-            </Text>
-          </View>
-
-          <View style={styles.controls}>
-            <TouchableOpacity
-              style={styles.cancelControlButton}
-              onPress={handleCancel}
-            >
-              <Text style={styles.cancelButtonText}>Cancel</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.captureButton, isCapturing && styles.capturingButton]}
-              onPress={takePhoto}
-              disabled={isCapturing}
-            >
-              <View style={styles.captureButtonInner} />
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.flipButton}
-              onPress={toggleCameraType}
-            >
-              <Text style={styles.flipButtonText}>Flip</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </CameraView>
-    </SafeAreaView>
+    <CameraScreen
+      cameraType={cameraType}
+      onCapture={handleCapture}
+      onCancel={onCancel}
+      onFlipCamera={toggleCameraType}
+      isCapturing={isCapturing}
+    />
   );
 };
 

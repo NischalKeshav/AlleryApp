@@ -1,4 +1,6 @@
 import AllergyPhotoCapture from '../components/AllergyPhotoCapture';
+import React from 'react';
+import { View, Text, StyleSheet } from 'react-native';
 
 const ScannerPage = () => {
   const handlePhotoTaken = (photo) => {
@@ -11,10 +13,10 @@ const ScannerPage = () => {
 
   return (
     <AllergyPhotoCapture
-      onPhotoTaken={handlePhotoTaken}
+      onPhotoTaken={(photo) => handlePhotoTaken(photo)}
       onCancel={handleCancel}
     />
   );
 };
 
-export default ScannerPage
+export default ScannerPage;
