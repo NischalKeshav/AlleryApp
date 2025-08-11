@@ -8,3 +8,4 @@ export const NAVBAR_CONFIG = {
   onLeftPress: () => alert('Menu pressed!'),
   onRightPress: () => alert('Search pressed!'),
 };
+
