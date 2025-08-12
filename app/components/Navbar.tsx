@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { NAVBAR_CONFIG } from '../constants'; // Adjust path if needed
+import { NAVBAR_CONFIG } from '../constants';
 import SideBarMenu from './SideBarMenu';
 
 const Navbar = () => {
