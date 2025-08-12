@@ -52,6 +52,7 @@ const AllergyPhotoCapture = ({ onPhotoTaken, onCancel }) => {
       if (hasMediaLibraryPermission) {
         try {
           await MediaLibrary.saveToLibraryAsync(capturedPhoto.uri);
+          console.log("photo saved");
         } catch (error) {
           console.log('Could not save to media library:', error);
         }

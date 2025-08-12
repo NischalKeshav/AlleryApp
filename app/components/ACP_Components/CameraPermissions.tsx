@@ -1,40 +1,41 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
   StyleSheet,
-  Alert,
-  Image,
   SafeAreaView,
-  Platform,
 } from 'react-native';
-import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
-import * as MediaLibrary from 'expo-media-library';
+import { useCameraPermissions } from 'expo-camera';
 
-// Permission Request Component
 const CameraPermissionScreen = ({ onPermissionGranted, onCancel }) => {
   const [cameraPermission, requestCameraPermission] = useCameraPermissions();
 
-  const handleRequestPermission = async () => {
-    const result = await requestCameraPermission();
-    if (result.granted) {
+  // Run side-effect after render when permissions are granted
+  useEffect(() => {
+    if (cameraPermission?.granted) {
       onPermissionGranted();
     }
+  }, [cameraPermission?.granted]);
+
+  const handleRequestPermission = async () => {
+    await requestCameraPermission();
   };
 
   if (!cameraPermission) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.permissionContainer}>
-          <Text style={styles.permissionText}>Loading camera permissions...</Text>
+          <Text style={styles.permissionText}>
+            Loading camera permissions...
+          </Text>
         </View>
       </SafeAreaView>
     );
   }
 
   if (cameraPermission.granted) {
-    onPermissionGranted();
+    // Returning null is fine since `useEffect` will handle navigation
     return null;
   }
 
@@ -42,7 +43,8 @@ const CameraPermissionScreen = ({ onPermissionGranted, onCancel }) => {
     <SafeAreaView style={styles.container}>
       <View style={styles.permissionContainer}>
         <Text style={styles.permissionText}>
-          Camera access is required to capture photos for allergy reaction detection
+          Camera access is required to capture photos for allergy reaction
+          detection
         </Text>
         <TouchableOpacity
           style={styles.permissionButton}
@@ -106,4 +108,5 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 });
+
 export default CameraPermissionScreen;
